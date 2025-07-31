@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: math-svc
+  namespace: math
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: math-svc
+  template:
+    metadata:
+      labels:
+        app: math-svc
+    spec:
+      containers:
+        - name: math
+          image: math-svc:0.1.0        # imaginea locală
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: math-env
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /docs
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /docs
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          volumeMounts:
+            - name: db
+              mountPath: /app/requests.db
+              subPath: requests.db
+      volumes:
+        - name: db
+          emptyDir: {}                 # înlocuiește cu PVC pt. persistență reală
